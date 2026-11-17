@@ -25,6 +25,11 @@
         },
         { "src": "/(manifest\\.webmanifest|favicon\\.ico|robots\\.txt)", "dest": "/$1" },
         { "src": "/icons/(.*)", "dest": "/icons/$1" },
+        {
+            "src": "/images/(.*)",
+            "headers": { "cache-control": "public, max-age=86400" },
+            "dest": "/images/$1"
+        },
         { "src": "/(.*)", "dest": "/api/index.php" }
     ],
     "crons": [
