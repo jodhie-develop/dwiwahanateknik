@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Database\PostgresConnection;
 use App\Models\Barang;
 use App\Models\JenisPerangkat;
 use App\Models\Layanan;
@@ -13,6 +14,7 @@ use App\Policies\MasterGlobalPolicy;
 use App\Policies\PelangganPolicy;
 use App\Support\SupabaseRls;
 use Carbon\Carbon;
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Event;
@@ -23,7 +25,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Koneksi pgsql yang aman untuk emulasi prepare (transaction pooler Supabase).
+        Connection::resolverFor('pgsql', fn ($pdo, $database, $prefix, $config) => new PostgresConnection($pdo, $database, $prefix, $config));
     }
 
     public function boot(): void
