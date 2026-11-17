@@ -69,6 +69,7 @@ Route::middleware(['auth', 'role:teknisi'])->prefix('teknisi')->name('teknisi.')
     Route::get('/', Teknisi\Beranda::class)->name('beranda');
     Route::get('job/{order}', Teknisi\JobDetail::class)->name('job')->whereNumber('order');
     Route::get('peta', Teknisi\PetaRute::class)->name('peta');
+    Route::get('perangkat', Teknisi\Perangkat::class)->name('perangkat');
     Route::post('push', [PushSubscriptionController::class, 'store'])->name('push.simpan');
     Route::delete('push', [PushSubscriptionController::class, 'destroy'])->name('push.hapus');
 });

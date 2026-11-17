@@ -7,11 +7,8 @@
         <link rel="apple-touch-icon" href="/icons/icon-192.png">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="mobile-web-app-capable" content="yes">
-        <script>
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
-            }
-        </script>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        @include('partials.pwa-teknisi')
     </head>
     <body class="min-h-screen bg-zinc-50 antialiased dark:bg-zinc-900">
         <header class="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/90">

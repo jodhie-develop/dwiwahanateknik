@@ -13,6 +13,9 @@
 
     <flux:menu.separator />
 
+    @if ($user->isTeknisi())
+        <flux:menu.item :href="route('teknisi.perangkat')" icon="device-phone-mobile" wire:navigate>Aplikasi &amp; Notifikasi</flux:menu.item>
+    @endif
     <flux:menu.item :href="route('settings.profile')" icon="cog" wire:navigate>Pengaturan akun</flux:menu.item>
 
     <flux:menu.separator />
