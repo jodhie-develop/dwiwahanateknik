@@ -54,6 +54,9 @@ class TerimaBarang extends Component
     /** @var array<int, TemporaryUploadedFile> */
     public array $foto = [];
 
+    /** Satu foto per upload (lihat komponen x-unggah-foto), lalu dipindah ke $foto. */
+    public ?TemporaryUploadedFile $fotoBaru = null;
+
     public function mount(): void
     {
         $this->authorize('create', OrderServis::class);
@@ -62,6 +65,19 @@ class TerimaBarang extends Component
         if ($id = request()->integer('pelanggan')) {
             $this->pilihPelanggan($id);
         }
+    }
+
+    public function updatedFotoBaru(): void
+    {
+        $this->validate(['fotoBaru' => ['required', 'image', 'max:8192']], attributes: ['fotoBaru' => 'foto']);
+
+        if (count($this->foto) >= 10) {
+            $this->addError('fotoBaru', 'Maksimal 10 foto.');
+        } else {
+            $this->foto[] = $this->fotoBaru;
+        }
+
+        $this->reset('fotoBaru');
     }
 
     public function hapusFoto(int $i): void

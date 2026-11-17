@@ -44,12 +44,8 @@
 
             <div class="space-y-2">
                 <flux:label>Foto penerimaan</flux:label>
-                <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 px-4 py-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-600 dark:hover:bg-zinc-700/40">
-                    <flux:icon.camera />
-                    <span wire:loading.remove wire:target="foto">Ambil / pilih foto barang</span>
-                    <span wire:loading wire:target="foto">Mengunggah...</span>
-                    <input type="file" wire:model="foto" accept="image/*" capture="environment" multiple class="hidden">
-                </label>
+                <x-unggah-foto model="fotoBaru" label="Ambil / pilih foto barang" />
+                <flux:error name="fotoBaru" />
                 <flux:error name="foto" />
                 <flux:error name="foto.*" />
                 @if ($foto)

@@ -21,8 +21,8 @@ class FotoOrder extends Component
 
     public string $kategori = 'sebelum';
 
-    /** @var array<int, TemporaryUploadedFile> */
-    public array $berkas = [];
+    /** Satu foto per upload (lihat komponen x-unggah-foto). */
+    public ?TemporaryUploadedFile $berkas = null;
 
     public function mount(int $orderId): void
     {
@@ -37,7 +37,7 @@ class FotoOrder extends Component
         return $order;
     }
 
-    /** Upload langsung setelah foto dipilih/diambil dari kamera. */
+    /** Simpan langsung setiap foto yang selesai diunggah dari kamera/galeri. */
     public function updatedBerkas(OrderService $service): void
     {
         $order = $this->order();
@@ -45,13 +45,10 @@ class FotoOrder extends Component
 
         $this->validate([
             'kategori' => ['required', Rule::enum(KategoriFoto::class)],
-            'berkas' => ['array', 'max:10'],
-            'berkas.*' => ['image', 'max:8192'],
-        ], attributes: ['berkas.*' => 'foto']);
+            'berkas' => ['required', 'image', 'max:8192'],
+        ], attributes: ['berkas' => 'foto']);
 
-        foreach ($this->berkas as $file) {
-            $service->tambahFoto($order, $file, KategoriFoto::from($this->kategori), auth()->user());
-        }
+        $service->tambahFoto($order, $this->berkas, KategoriFoto::from($this->kategori), auth()->user());
 
         $this->reset('berkas');
     }
