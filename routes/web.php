@@ -27,6 +27,8 @@ Route::get('/', function () {
 Route::get('cron/bersihkan-upload-sementara', [CronController::class, 'bersihkanUploadSementara'])
     ->middleware('throttle:10,1')
     ->name('cron.bersihkan-upload');
+// SEMENTARA: diagnosa penyimpanan di Vercel (dilindungi CRON_SECRET).
+Route::get('cron/diagnosa-penyimpanan', [CronController::class, 'diagnosaPenyimpanan'])->middleware('throttle:10,1');
 
 // ---------- Area admin (owner & admin cabang) ----------
 Route::middleware(['auth', 'role:owner,admin_cabang'])->group(function () {

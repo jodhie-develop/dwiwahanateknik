@@ -38,3 +38,10 @@ test('URL memakai https bila di belakang proxy Vercel', function () {
         ->assertOk()
         ->assertSee('https://contoh.vercel.app/livewire', false);
 });
+
+test('diagnosa penyimpanan menolak tanpa CRON_SECRET', function () {
+    config(['services.cron.secret' => 'rahasia-uji']);
+
+    $this->get('/cron/diagnosa-penyimpanan')->assertUnauthorized();
+    $this->get('/cron/diagnosa-penyimpanan', ['Authorization' => 'Bearer salah'])->assertUnauthorized();
+});
