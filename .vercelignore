@@ -1,7 +1,6 @@
 # Tidak ikut diunggah ke Vercel. vendor diinstal ulang oleh runtime vercel-php (composer install --no-dev).
 /vendor
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /storage/logs/*

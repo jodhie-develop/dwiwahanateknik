@@ -2,8 +2,8 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "framework": null,
     "regions": ["sin1"],
-    "installCommand": "npm ci",
-    "buildCommand": "npm run build",
+    "installCommand": "echo 'Lewati npm: aset public/build sudah di-commit'",
+    "buildCommand": "echo 'Lewati build: CSS butuh vendor/ PHP, jadi dibuild lokal & di-commit (dicek CI)'",
     "outputDirectory": "public",
     "functions": {
         "api/index.php": {

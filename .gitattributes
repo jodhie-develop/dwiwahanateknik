@@ -8,3 +8,6 @@
 
 CHANGELOG.md export-ignore
 README.md export-ignore
+
+# Hasil build Vite di-commit (Vercel tidak bisa build CSS karena butuh vendor/ PHP). Jangan ubah line ending.
+public/build/** -text linguist-generated

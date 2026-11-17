@@ -47,6 +47,13 @@ jobs:
       - name: Build Assets
         run: npm run build
 
+      # public/build di-commit karena Vercel tidak bisa build CSS (butuh vendor/ PHP).
+      # Gagal jika hasil build terbaru berbeda dari yang di-commit: jalankan `npm run build` lalu commit.
+      - name: Pastikan public/build sudah diperbarui
+        run: |
+          git add -N public/build
+          git diff --exit-code --stat -- public/build
+
       # Test memakai SQLite in-memory & disk lokal (lihat phpunit.xml), tidak menyentuh Supabase.
       - name: Run Tests
         run: ./vendor/bin/pest
