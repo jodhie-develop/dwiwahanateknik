@@ -1,0 +1,29 @@
+<?php
+
+use App\Http\Middleware\PastikanAkunAktif;
+use App\Http\Middleware\PastikanRole;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'role' => PastikanRole::class,
+        ]);
+
+        // User yang sudah login lalu membuka /login diarahkan sesuai role (teknisi → /teknisi), bukan /dashboard.
+        $middleware->redirectUsersTo(fn () => route('home'));
+
+        $middleware->web(append: [
+            PastikanAkunAktif::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
