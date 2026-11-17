@@ -1,0 +1,16 @@
+# Tidak ikut diunggah ke Vercel. vendor diinstal ulang oleh runtime vercel-php (composer install --no-dev).
+/vendor
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/logs/*
+/storage/app/private/*
+/storage/framework/views/*
+/storage/framework/sessions/*
+/storage/framework/cache/*
+/database/*.sqlite*
+/tests
+.env
+.env.*
+!.env.example

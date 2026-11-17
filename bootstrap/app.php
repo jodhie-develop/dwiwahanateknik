@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => PastikanRole::class,
         ]);
 
+        // Di Vercel aplikasi berada di belakang proxy; percayai header X-Forwarded-* agar URL & cookie memakai https.
+        $middleware->trustProxies(at: '*');
+
         // User yang sudah login lalu membuka /login diarahkan sesuai role (teknisi → /teknisi), bukan /dashboard.
         $middleware->redirectUsersTo(fn () => route('home'));
 

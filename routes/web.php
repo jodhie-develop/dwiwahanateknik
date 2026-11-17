@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CetakBengkelController;
+use App\Http\Controllers\CronController;
 use App\Http\Controllers\FilterCabangController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Livewire\Bengkel;
@@ -21,6 +22,11 @@ Route::get('/', function () {
 
     return redirect()->route($user->isTeknisi() ? 'teknisi.beranda' : 'dashboard');
 })->name('home');
+
+// ---------- Tugas terjadwal (Vercel Cron, dilindungi CRON_SECRET) ----------
+Route::get('cron/bersihkan-upload-sementara', [CronController::class, 'bersihkanUploadSementara'])
+    ->middleware('throttle:10,1')
+    ->name('cron.bersihkan-upload');
 
 // ---------- Area admin (owner & admin cabang) ----------
 Route::middleware(['auth', 'role:owner,admin_cabang'])->group(function () {

@@ -14,6 +14,11 @@ return [
     |
     */
 
+    // Vercel Cron mengirim header "Authorization: Bearer <CRON_SECRET>".
+    'cron' => [
+        'secret' => env('CRON_SECRET'),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
