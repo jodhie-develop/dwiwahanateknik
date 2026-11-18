@@ -25,10 +25,8 @@
             @php($t = $b['tim'])
             <div wire:key="box-{{ $t->id }}" @class([
                 'flex flex-col gap-4 rounded-xl border p-5',
-                'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30' => $b['total'] > 0 && $b['selesai'] === $b['total'],
-                'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30' => $b['berjalan'] > 0 && ! ($b['total'] > 0 && $b['selesai'] === $b['total']),
-                'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30' => $b['total'] > 0 && $b['berjalan'] === 0 && $b['selesai'] < $b['total'],
-                'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900' => $b['total'] === 0,
+                'border-sky-200 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/30' => $loop->even,
+                'border-pink-200 bg-pink-50 dark:border-pink-900 dark:bg-pink-950/30' => $loop->odd,
             ])>
                 <div class="flex items-start justify-between gap-2">
                     <div>
