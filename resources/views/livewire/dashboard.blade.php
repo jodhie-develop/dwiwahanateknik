@@ -23,7 +23,13 @@
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         @forelse ($box as $b)
             @php($t = $b['tim'])
-            <div wire:key="box-{{ $t->id }}" class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+            <div wire:key="box-{{ $t->id }}" @class([
+                'flex flex-col gap-4 rounded-xl border p-5',
+                'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30' => $b['total'] > 0 && $b['selesai'] === $b['total'],
+                'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30' => $b['berjalan'] > 0 && ! ($b['total'] > 0 && $b['selesai'] === $b['total']),
+                'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30' => $b['total'] > 0 && $b['berjalan'] === 0 && $b['selesai'] < $b['total'],
+                'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900' => $b['total'] === 0,
+            ])>
                 <div class="flex items-start justify-between gap-2">
                     <div>
                         <div class="text-lg font-semibold">{{ $t->nama_tim }}</div>
@@ -99,7 +105,16 @@
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
             @foreach ($ringkasBengkel as $r)
                 <a href="{{ route('bengkel.index', ['tampil' => $r['status']->value]) }}" wire:navigate wire:key="bkl-{{ $r['status']->value }}"
-                   class="rounded-xl border border-zinc-200 bg-white p-3 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">
+                   @class([
+                       'rounded-xl border p-3 transition-colors',
+                       'border-sky-200 bg-sky-50 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/30 dark:hover:bg-sky-950/50' => $r['status'] === App\Enums\StatusOrder::Diterima,
+                       'border-blue-200 bg-blue-50 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/30 dark:hover:bg-blue-950/50' => $r['status'] === App\Enums\StatusOrder::Diagnosa,
+                       'border-amber-200 bg-amber-50 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/30 dark:hover:bg-amber-950/50' => $r['status'] === App\Enums\StatusOrder::MenungguKonfirmasi,
+                       'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/30 dark:hover:bg-indigo-950/50' => $r['status'] === App\Enums\StatusOrder::Dikerjakan,
+                       'border-orange-200 bg-orange-50 hover:bg-orange-100 dark:border-orange-900 dark:bg-orange-950/30 dark:hover:bg-orange-950/50' => $r['status'] === App\Enums\StatusOrder::MenungguSparepart,
+                       'border-green-200 bg-green-50 hover:bg-green-100 dark:border-green-900 dark:bg-green-950/30 dark:hover:bg-green-950/50' => $r['status'] === App\Enums\StatusOrder::Selesai,
+                       'border-red-200 bg-red-50 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/30 dark:hover:bg-red-950/50' => $r['status'] === App\Enums\StatusOrder::Batal,
+                   ])>
                     <div class="text-2xl font-semibold">{{ $r['jumlah'] }}</div>
                     <div class="text-xs text-zinc-500">{{ $r['label'] }}</div>
                 </a>
