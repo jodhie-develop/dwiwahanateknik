@@ -133,3 +133,43 @@ Daftar unit pelanggan yang sudah waktunya servis ulang berdasarkan `interval_rem
 - Skema dan pembagian komisi dalam tim.
 - Ada/tidaknya biaya cek dan DP untuk servis bengkel.
 - Batas hari pengambilan barang bengkel.
+
+---
+
+# Peta kode (kondisi saat ini)
+
+Status: Fase 1, 2A (kunjungan + PWA teknisi) dan 2B (bengkel) sudah jadi. 2C (nota kunjungan cetak & share WA) dan Fase 3–5 belum.
+
+## Perintah
+PHP/Composer di mesin dev ini tidak ada di PATH (Laragon). Di Bash: `export PATH="/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64:/c/laragon/bin/composer:$PATH"`.
+- Dev server lengkap: `composer dev` (serve + queue + pail + vite).
+- Test: `./vendor/bin/pest` · satu file: `./vendor/bin/pest tests/Feature/Order/OrderServiceTest.php` · satu test: `--filter="nama test"`.
+  Test memakai SQLite in-memory + disk `local` (lihat `phpunit.xml`); jangan pernah diarahkan ke Supabase.
+- Gaya kode: `vendor/bin/pint` (CI menjalankan `pint --test`).
+- Aset: `npm run build` lalu **commit `public/build`**. Vercel tidak membuild aset, dan CI gagal jika `public/build` tidak sama dengan hasil build terbaru. Wajib dijalankan setelah menambah class Tailwind baru di Blade.
+- RLS Supabase: otomatis setelah setiap `migrate` (listener `MigrationsEnded` → `App\Support\SupabaseRls`), atau manual `php artisan supabase:rls`.
+
+## Arsitektur
+- **Livewire 4 + Flux 2, komponen berbasis class** di `app/Livewire/{Master,Order,Bengkel,Teknisi,Pengaturan}`, view di `resources/views/livewire/...`. Volt hanya untuk halaman `settings/*` dan auth.
+  Jebakan: `wire:model.blur` tidak mengirim request (pakai `wire:model.live.blur`); placeholder `flux:select` jangan pakai opsi disabled; radio Flux bukan `<input>`.
+- **Routing** (`routes/web.php`): area admin `role:owner,admin_cabang` (dashboard, master, order, bengkel, pengaturan); area teknisi `role:teknisi` di prefix `/teknisi` (PWA mobile). `/` mengarahkan sesuai role. Middleware `PastikanRole` (alias `role`) hanya memisahkan area; otorisasi detail lewat Policy di `app/Policies` (trait `CekPeran`). `PastikanAkunAktif` mengeluarkan user yang dinonaktifkan.
+- **Scoping cabang**: trait `App\Models\Concerns\BerCabang` di semua model ber-`cabang_id` → global scope `CabangScope` (berdasarkan `App\Support\KonteksCabang`; owner memakai filter cabang di session via `FilterCabangController`) dan memaksa `cabang_id` user non-owner saat menyimpan. `OrderServis` juga memakai `JobTeknisiScope` (teknisi hanya melihat order miliknya lewat `order_teknisi`). Di test, siapkan data cabang lain dengan helper `sebagaiSistem()` (`tests/Pest.php`).
+- **Logika bisnis di service, bukan di komponen**:
+  - `App\Services\OrderService` — satu-satunya jalur ubah order: buat, terima bengkel, estimasi & persetujuan, `ubahStatus` (validasi + tulis `order_status_log`), tim/teknisi, item & total, check-in, foto, tanda tangan. Pelanggaran aturan dilempar sebagai `ValidationException`; order berstatus final (`StatusOrder::terkunci()`) tidak boleh diubah.
+  - Aturan transisi status hanya di `App\Enums\StatusOrder::tujuanSah()`.
+  - `PenomoranDokumen` — nomor per cabang per bulan (tabel `penomoran_dokumen`, insertOrIgnore + `lockForUpdate`); panggil di dalam transaksi penyimpanan dokumen. Prefix: `KJG` kunjungan, `SRV` bengkel.
+  - `PembagianTim` — bagi otomatis order kunjungan tanpa tim per tanggal (rata ke tim paling sedikit job; jika semua tim sudah bergerak → tim terdekat, haversine via `App\Support\Jarak`). Aturan lengkap di docblock class.
+  - `RuteTeknisi` — titik rute halaman peta teknisi.
+- **Enum** di `app/Enums` memakai trait `EnumHelpers` (`values()`, `options()` untuk dropdown) dan method `label()`/`warna()` (warna badge Flux).
+- **Setting**: model `Pengaturan` (key-value; nilai per cabang menimpa global `cabang_id = null`). Akses bertipe lewat class di `app/Support`, mis. `PengaturanBengkel` (biaya cek selalu ditagih bila aktif; batas hari ambil default 14).
+- **Halaman master** memakai trait `App\Livewire\Concerns\KelolaMaster` (cari, filter aktif, paginasi, modal tambah/ubah, soft delete). Trait lain: `PilihPelangganUnit`, `IsiKoordinat` (koordinat dari link Google Maps, `App\Support\KoordinatMaps`).
+- **Helper global** (`app/helpers.php`): `rupiah()`, `tgl()` (d/m/Y), `berkas_url()` (temporary URL bucket privat). WhatsApp link: `App\Support\WhatsApp`.
+- **File**: disk default `supabase` (S3, bucket privat) — tampilkan selalu lewat `berkas_url()`. Upload Livewire ke S3 **tidak mendukung `multiple`**: unggah satu per satu dengan komponen Blade `x-unggah-foto` + hook `updated{Properti}`.
+- **Cetak bengkel**: `CetakBengkelController` (tanda terima A5×2, label 3 kolom A4), view di `resources/views/cetak`.
+- **Notifikasi**: Web Push (`laravel-notification-channels/webpush`, `JobBaruDitugaskan`) dikirim via `KirimNotifikasi::aman()` agar kegagalan push tidak menggagalkan aksi. Service worker `public/sw.js`, manifest `public/manifest.webmanifest`. Di Windows lokal butuh env `OPENSSL_CONF=<php>/extras/ssl/openssl.cnf`.
+- **PostgreSQL**: `App\Database\PostgresConnection` (didaftarkan di `AppServiceProvider`) mengirim boolean sebagai `'true'/'false'` saat `DB_EMULATE_PREPARES=true` (transaction pooler). `Model::shouldBeStrict()` aktif di non-produksi — hindari lazy loading.
+
+## Deploy
+- **Vercel** (`vercel.json`, region `sin1`, runtime `vercel-php`): semua request non-statis → `api/index.php`, yang mengarahkan cache bootstrap/view ke `/tmp` dan log ke stderr. Tidak ada build di Vercel (aset dari `public/build` yang di-commit).
+- **Cron Vercel**: `GET /cron/bersihkan-upload-sementara` (hapus `livewire-tmp` > 24 jam di bucket), dilindungi header `Authorization: Bearer <CRON_SECRET>` (`config('services.cron.secret')`).
+- CI GitHub Actions (`.github/workflows`): `tests.yml` (build aset + cek `public/build` + Pest) dan `lint.yml` (Pint).
