@@ -10,12 +10,29 @@
 
 /* Elemen yang sedang tampil layar penuh (Fullscreen API), dipakai di dashboard. */
 @custom-variant fullscreen (&:fullscreen);
+/* Turunan dari elemen yang sedang layar penuh. */
+@custom-variant di-layar-penuh (&:where(:fullscreen *));
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     /* Font judul & angka besar (dashboard). */
-    --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+    /* Denyut titik LIVE di monitor TV. */
+    --animate-denyut: denyut 1.8s infinite;
+    @keyframes denyut {
+        0% { box-shadow: 0 0 0 0 rgb(74 222 128 / 0.6); }
+        70% { box-shadow: 0 0 0 10px rgb(74 222 128 / 0); }
+        100% { box-shadow: 0 0 0 0 rgb(74 222 128 / 0); }
+    }
+
+    /* Kartu tim masuk dari kanan saat halaman monitor berganti. */
+    --animate-geser-masuk: geser-masuk 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    @keyframes geser-masuk {
+        from { opacity: 0; transform: translateX(80px); }
+        to { opacity: 1; transform: none; }
+    }
 
     /* Kartu muncul halus saat halaman dibuka. */
     --animate-muncul: muncul 0.5s ease-out both;
