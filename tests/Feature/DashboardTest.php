@@ -100,8 +100,9 @@ test('owner melihat tab ringkasan dan bisa pindah ke monitor', function () {
 
     Livewire::test(Dashboard::class)
         ->assertViewHas('tampilanAktif', 'ringkasan')
-        ->assertSee(['Ringkasan', 'Monitor TV', 'Jadwal tim hari ini', 'Order terbaru', 'Alur servis bengkel', 'Segera hadir'])
+        ->assertSee(['Ringkasan', 'Monitor TV', 'Ringkasan Kerja hari ini', 'Sudah terselesaikan', 'Belum terselesaikan', 'Pembayaran diterima', 'Order terbaru', 'Alur servis bengkel', 'Segera hadir'])
         ->assertViewHas('kpi', fn ($kpi) => $kpi['kunjungan'] === 2 && $kpi['timJalan'] === 1)
+        ->assertViewHas('kerja', fn ($k) => $k['total'] === 2 && $k['selesai'] === 1 && $k['belum'] === 1)
         ->set('tampilan', 'monitor')
         ->assertViewHas('tampilanAktif', 'monitor')
         ->assertSee('Job Progress Monitoring');

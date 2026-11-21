@@ -61,50 +61,81 @@
         </div>
     </section>
 
-    {{-- Jadwal tim + keuangan --}}
+    {{-- Ringkasan kerja + keuangan --}}
     <div class="flex flex-wrap gap-5">
-        <section aria-labelledby="h-jadwal" class="{{ $kartu }} flex min-w-0 flex-[2_1_520px] flex-col gap-4 p-5">
+        <section aria-labelledby="h-kerja" class="{{ $kartu }} flex min-w-0 flex-[2_1_520px] flex-col gap-4 p-5">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 id="h-jadwal" class="text-[17px] font-bold">Jadwal tim hari ini</h2>
-                    <span class="text-[13px] text-zinc-600 dark:text-zinc-400">Job kunjungan per tim</span>
+                    <h2 id="h-kerja" class="text-[17px] font-bold">Ringkasan Kerja hari ini</h2>
+                    <span class="text-[13px] text-zinc-600 dark:text-zinc-400">Job kunjungan {{ tgl($tanggalTampil) }}, tidak termasuk yang batal</span>
                 </div>
                 <a href="{{ route('order.jadwal', ['tanggal' => $tanggalTampil]) }}" wire:navigate class="py-2.5 font-semibold text-cyan-700 hover:text-cyan-800 dark:text-cyan-400">Buka jadwal tim</a>
             </div>
-            <div class="grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
-                @forelse ($box as $b)
-                    @php($t = $b['tim'])
-                    <div wire:key="jadwal-{{ $t->id }}" class="flex flex-col gap-2.5 rounded-[10px] border border-zinc-200 bg-zinc-50 p-3.5 dark:border-zinc-700 dark:bg-zinc-800/50">
-                        <div class="flex items-center justify-between gap-2">
-                            <div class="flex min-w-0 flex-col">
-                                <span class="truncate font-bold">{{ str($t->nama_tim)->lower()->startsWith('tim') ? $t->nama_tim : 'Tim '.$t->nama_tim }}</span>
-                                <span class="truncate text-[13px] text-zinc-600 dark:text-zinc-400">{{ $t->anggotaAktif->map(fn ($a) => $a->teknisi?->nama)->filter()->implode(' & ') ?: 'Belum ada anggota' }}</span>
-                            </div>
-                            <span @class([
-                                'whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold',
-                                'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' => $b['total'] > 0 && $b['selesai'] === $b['total'],
-                                'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300' => $b['berjalan'] > 0,
-                                'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200' => $b['berjalan'] === 0 && ! ($b['total'] > 0 && $b['selesai'] === $b['total']),
-                            ])>{{ $b['selesai'] }}/{{ $b['total'] }} selesai</span>
-                        </div>
-                        @forelse ($b['jobs'] as $j)
-                            <a href="{{ $j['order']->urlDetail() }}" wire:navigate class="-mx-1 flex gap-2.5 rounded-md border-t border-dashed border-zinc-200 px-1 pt-2.5 hover:bg-white dark:border-zinc-700 dark:hover:bg-zinc-800">
-                                <span class="w-11 flex-none font-semibold tabular-nums">{{ $j['jam'] ? str_replace(':', '.', $j['jam']) : '—' }}</span>
-                                <div class="flex min-w-0 flex-1 flex-col gap-1">
-                                    <span class="font-semibold">{{ $j['kerja'] }}</span>
-                                    <span class="truncate text-[13px] text-zinc-600 dark:text-zinc-400">{{ $j['tempat'] }}</span>
-                                    <span class="{{ $pill($j['status']) }} self-start whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold">{{ $j['status']->label() }}</span>
-                                </div>
-                            </a>
-                        @empty
-                            <span class="border-t border-dashed border-zinc-200 pt-2.5 text-[13px] text-zinc-500 dark:border-zinc-700">Tidak ada job.</span>
-                        @endforelse
+
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="rounded-[10px] bg-zinc-50 p-4 dark:bg-zinc-800/60">
+                    <div class="text-[13px] font-medium text-zinc-600 dark:text-zinc-400">Jumlah pekerjaan</div>
+                    <div class="mt-1 text-3xl font-bold tabular-nums">{{ $kerja['total'] }}</div>
+                </div>
+                <div class="rounded-[10px] bg-green-50 p-4 dark:bg-green-950/40">
+                    <div class="text-[13px] font-medium text-green-800 dark:text-green-300">Sudah terselesaikan</div>
+                    <div class="mt-1 text-3xl font-bold tabular-nums text-green-700 dark:text-green-400">{{ $kerja['selesai'] }}</div>
+                </div>
+                <div class="rounded-[10px] bg-orange-50 p-4 dark:bg-orange-950/40">
+                    <div class="text-[13px] font-medium text-orange-800 dark:text-orange-300">Belum terselesaikan</div>
+                    <div class="mt-1 text-3xl font-bold tabular-nums text-orange-700 dark:text-orange-400">{{ $kerja['belum'] }}</div>
+                </div>
+                <div class="rounded-[10px] border border-dashed border-zinc-300 p-4 dark:border-zinc-600">
+                    <div class="text-[13px] font-medium text-zinc-600 dark:text-zinc-400">Pembayaran diterima</div>
+                    <div class="mt-1 text-3xl font-bold text-zinc-300 dark:text-zinc-600">Rp –</div>
+                    <flux:badge size="sm" color="amber" class="mt-1">Segera hadir</flux:badge>
+                </div>
+            </div>
+
+            @if ($kerja['total'] > 0)
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-[13px] text-zinc-600 dark:text-zinc-400">
+                        <span>Progres</span><span class="font-semibold text-zinc-800 dark:text-zinc-200">{{ $kerja['persen'] }}%</span>
                     </div>
-                @empty
-                    <div class="rounded-[10px] border border-dashed border-zinc-300 p-6 text-center text-zinc-500 dark:border-zinc-600">
-                        Belum ada tim aktif. Buat tim di menu <a href="{{ route('master.tim') }}" class="underline" wire:navigate>Tim</a>.
+                    <div class="h-2.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800" role="progressbar" aria-label="Progres kerja hari ini" aria-valuenow="{{ $kerja['persen'] }}" aria-valuemin="0" aria-valuemax="100">
+                        <div class="h-full rounded-full bg-green-500" style="width: {{ $kerja['persen'] }}%"></div>
                     </div>
-                @endforelse
+                </div>
+            @endif
+
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[420px] border-collapse text-sm">
+                    <thead>
+                        <tr class="text-left text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
+                            <th class="border-b border-zinc-200 px-3 py-2 font-semibold dark:border-zinc-700">Tim</th>
+                            <th class="border-b border-zinc-200 px-3 py-2 text-right font-semibold dark:border-zinc-700">Pekerjaan</th>
+                            <th class="border-b border-zinc-200 px-3 py-2 text-right font-semibold dark:border-zinc-700">Selesai</th>
+                            <th class="border-b border-zinc-200 px-3 py-2 text-right font-semibold dark:border-zinc-700">Belum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($box as $b)
+                            @php($t = $b['tim'])
+                            <tr wire:key="kerja-{{ $t->id }}">
+                                <td class="border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
+                                    <span class="font-semibold">{{ str($t->nama_tim)->lower()->startsWith('tim') ? $t->nama_tim : 'Tim '.$t->nama_tim }}</span>
+                                    <span class="text-[13px] text-zinc-500">· {{ $t->anggotaAktif->map(fn ($a) => $a->teknisi?->nama)->filter()->implode(' & ') ?: 'Belum ada anggota' }}</span>
+                                </td>
+                                <td class="border-b border-zinc-100 px-3 py-2 text-right tabular-nums dark:border-zinc-800">{{ $b['total'] }}</td>
+                                <td class="border-b border-zinc-100 px-3 py-2 text-right tabular-nums text-green-700 dark:border-zinc-800 dark:text-green-400">{{ $b['selesai'] }}</td>
+                                <td class="border-b border-zinc-100 px-3 py-2 text-right tabular-nums text-orange-700 dark:border-zinc-800 dark:text-orange-400">{{ $b['total'] - $b['selesai'] }}</td>
+                            </tr>
+                        @endforeach
+                        @if ($belumDibagi > 0)
+                            <tr>
+                                <td class="px-3 py-2 italic text-zinc-500">Belum dibagi ke tim</td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ $belumDibagi }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums">0</td>
+                                <td class="px-3 py-2 text-right tabular-nums text-orange-700 dark:text-orange-400">{{ $belumDibagi }}</td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
             </div>
         </section>
 

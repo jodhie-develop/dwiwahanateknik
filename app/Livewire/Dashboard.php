@@ -204,6 +204,7 @@ class Dashboard extends Component
         $tidakBatal = [StatusOrder::Batal->value, StatusOrder::Dikembalikan->value];
 
         $kunjunganHariIni = OrderServis::query()->kunjungan()->padaTanggal($tanggal)->whereNotIn('status', $tidakBatal)->count();
+        $selesaiHariIni = OrderServis::query()->kunjungan()->padaTanggal($tanggal)->where('status', StatusOrder::Selesai->value)->count();
         $bengkelHariIni = OrderServis::query()->bengkel()->whereDate('created_at', $tanggal)->whereNotIn('status', $tidakBatal)->count();
 
         // Alur bengkel: tiap tahap menampilkan maks. 2 barang terlama.
@@ -243,6 +244,12 @@ class Dashboard extends Component
                 'timBelumMulai' => $box->filter(fn ($b) => $b['total'] > 0 && $b['berjalan'] === 0 && $b['selesai'] === 0)->count(),
                 'unitBengkel' => $ringkasBengkel->sum('jumlah'),
                 'sparepart' => $ringkasBengkel->firstWhere('status', StatusOrder::MenungguSparepart)['jumlah'] ?? 0,
+            ],
+            'kerja' => [
+                'total' => $kunjunganHariIni,
+                'selesai' => $selesaiHariIni,
+                'belum' => $kunjunganHariIni - $selesaiHariIni,
+                'persen' => $kunjunganHariIni > 0 ? (int) round($selesaiHariIni / $kunjunganHariIni * 100) : 0,
             ],
             'alurBengkel' => $alurBengkel,
             'orderTerbaru' => $orderTerbaru,
