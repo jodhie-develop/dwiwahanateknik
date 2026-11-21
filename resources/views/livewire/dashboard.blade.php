@@ -30,6 +30,9 @@
         tampil(i) {
             return Math.floor(i / this.perHalaman) === this.halaman;
         },
+        toggleLayarPenuh() {
+            document.fullscreenElement ? document.exitFullscreen() : this.$root.requestFullscreen();
+        },
         init() {
             this.$nextTick(() => this.hitung());
             this.timer = setInterval(() => this.putar(), 20000);
@@ -122,7 +125,8 @@
         </flux:callout>
     @endif
 
-    <div x-show="jumlahHalaman > 1" x-cloak class="-mb-2 flex items-center justify-end gap-3 text-xs text-zinc-500">
+    {{-- Tempatnya selalu disediakan (invisible, bukan hidden) agar ukuran grid tidak bergeser saat indikator muncul. --}}
+    <div :class="jumlahHalaman > 1 ? '' : 'invisible'" class="-mt-3 flex h-5 items-center justify-end gap-3 text-xs text-zinc-500">
         <span>Tim <span x-text="halaman * perHalaman + 1"></span>–<span x-text="Math.min((halaman + 1) * perHalaman, jumlah)"></span> dari <span x-text="jumlah"></span> · ganti otomatis tiap 20 detik</span>
         <div class="flex gap-1.5">
             <template x-for="h in jumlahHalaman" :key="h">
