@@ -8,8 +8,28 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Elemen yang sedang tampil layar penuh (Fullscreen API), dipakai di dashboard. */
+@custom-variant fullscreen (&:fullscreen);
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Font judul & angka besar (dashboard). */
+    --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+
+    /* Kartu muncul halus saat halaman dibuka. */
+    --animate-muncul: muncul 0.5s ease-out both;
+    @keyframes muncul {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Kilau berjalan di progress bar. */
+    --animate-kilau: kilau 2.2s linear infinite;
+    @keyframes kilau {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(250%); }
+    }
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
