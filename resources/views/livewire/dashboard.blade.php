@@ -10,24 +10,95 @@
     ];
 @endphp
 
-<div wire:poll.30s
+{{--
+    Tiap 20 detik: data di-refresh (tanpa reload halaman, supaya mode layar penuh tidak keluar) dan,
+    jika tidak semua kartu tim muat di layar, kartu berganti ke kelompok tim berikutnya.
+    Di layar sempit (< 640px) tidak bergiliran: kartu ditampilkan semua dan cukup di-scroll.
+--}}
+<div
     x-data="{
         layarPenuh: false,
         bisaLayarPenuh: document.fullscreenEnabled ?? false,
-        toggleLayarPenuh() {
-            document.fullscreenElement ? document.exitFullscreen() : this.$root.requestFullscreen();
+        halaman: 0,
+        perHalaman: Infinity,
+        jumlah: 0,
+        timer: null,
+        tundaUkur: null,
+        get jumlahHalaman() {
+            return Number.isFinite(this.perHalaman) ? Math.max(1, Math.ceil(this.jumlah / this.perHalaman)) : 1;
+        },
+        tampil(i) {
+            return Math.floor(i / this.perHalaman) === this.halaman;
+        },
+        init() {
+            this.$nextTick(() => this.hitung());
+            this.timer = setInterval(() => this.putar(), 20000);
+            window.addEventListener('resize', () => {
+                clearTimeout(this.tundaUkur);
+                this.tundaUkur = setTimeout(() => this.ukurUlang(), 300);
+            });
+        },
+        destroy() {
+            clearInterval(this.timer);
+        },
+        putar() {
+            if (this.jumlahHalaman > 1) {
+                this.halaman = (this.halaman + 1) % this.jumlahHalaman;
+            }
+            this.$wire.$refresh().then(() => this.$nextTick(() => this.hitung()));
+        },
+        keHalaman(h) {
+            this.halaman = h;
+            clearInterval(this.timer);
+            this.timer = setInterval(() => this.putar(), 20000);
+        },
+        ukurUlang() {
+            this.perHalaman = Infinity;
+            this.halaman = 0;
+            this.$nextTick(() => this.hitung());
+        },
+        hitung() {
+            const grid = this.$refs.grid;
+            if (! grid) return;
+            const kartu = [...grid.querySelectorAll('[data-kartu-tim]')];
+            this.jumlah = kartu.length;
+
+            if (window.innerWidth < 640) {
+                this.perHalaman = Infinity;
+                this.halaman = 0;
+                return;
+            }
+
+            const tinggi = Math.max(0, ...kartu.map((k) => k.offsetHeight));
+            if (! tinggi) return;
+
+            const gaya = getComputedStyle(grid);
+            const kolom = gaya.gridTemplateColumns.split(' ').length;
+            const jarak = parseFloat(gaya.rowGap) || 0;
+            const gulir = document.fullscreenElement ? this.$root.scrollTop : window.scrollY;
+            const atas = grid.getBoundingClientRect().top + gulir;
+            const baris = Math.max(1, Math.floor((window.innerHeight - atas - 24 + jarak) / (tinggi + jarak)));
+
+            const muat = baris * kolom;
+            this.perHalaman = muat >= this.jumlah ? Infinity : muat;
+            if (this.halaman >= this.jumlahHalaman) this.halaman = 0;
         },
     }"
-    x-on:fullscreenchange.document="layarPenuh = document.fullscreenElement === $root"
+    x-on:fullscreenchange.document="layarPenuh = document.fullscreenElement === $root; $nextTick(() => ukurUlang())"
     class="space-y-6 fullscreen:overflow-y-auto fullscreen:bg-zinc-100 fullscreen:p-6 lg:fullscreen:p-10 dark:fullscreen:bg-zinc-950">
 
     <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-            <flux:heading size="xl" level="1" class="font-display !text-2xl !font-bold tracking-tight">Dashboard</flux:heading>
-            <flux:subheading class="font-display !text-base">
-                <span class="bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-orange-500 bg-clip-text font-semibold text-transparent dark:from-indigo-400 dark:via-fuchsia-400 dark:to-orange-300">Job Progress Monitoring</span>
-                · {{ now()->parse($tanggalTampil)->translatedFormat('l') }}, {{ tgl($tanggalTampil) }}
-            </flux:subheading>
+        <div class="flex items-center gap-4">
+            <div class="shrink-0 rounded-xl bg-white p-1 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700">
+                <img src="/images/logo-dwiwahana.webp" width="800" height="533" alt="Logo Dwiwahana Teknik" class="h-14 w-auto">
+            </div>
+            <div>
+                <flux:heading size="xl" level="1" class="font-display !text-2xl !font-bold tracking-tight">Dwiwahana Teknik AC</flux:heading>
+                <flux:subheading class="font-display !text-base">
+                    <span class="bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-orange-500 bg-clip-text font-semibold text-transparent dark:from-indigo-400 dark:via-fuchsia-400 dark:to-orange-300">Job Progress Monitoring</span>
+                    · {{ now()->parse($tanggalTampil)->translatedFormat('l') }}, {{ tgl($tanggalTampil) }}
+                </flux:subheading>
+            </div>
         </div>
         <div class="flex items-center gap-2">
             <flux:button icon="chevron-left" variant="ghost" wire:click="geserHari(-1)" aria-label="Hari sebelumnya" />
@@ -51,11 +122,24 @@
         </flux:callout>
     @endif
 
-    <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+    <div x-show="jumlahHalaman > 1" x-cloak class="-mb-2 flex items-center justify-end gap-3 text-xs text-zinc-500">
+        <span>Tim <span x-text="halaman * perHalaman + 1"></span>–<span x-text="Math.min((halaman + 1) * perHalaman, jumlah)"></span> dari <span x-text="jumlah"></span> · ganti otomatis tiap 20 detik</span>
+        <div class="flex gap-1.5">
+            <template x-for="h in jumlahHalaman" :key="h">
+                <button type="button" x-on:click="keHalaman(h - 1)" :aria-label="'Halaman ' + h"
+                    :class="halaman === h - 1 ? 'w-6 bg-zinc-700 dark:bg-zinc-200' : 'w-2.5 bg-zinc-300 hover:bg-zinc-400 dark:bg-zinc-600'"
+                    class="h-2.5 rounded-full transition-all duration-300"></button>
+            </template>
+        </div>
+    </div>
+
+    <div x-ref="grid" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         @forelse ($box as $b)
             @php($t = $b['tim'])
             @php($w = $palet[$loop->index % count($palet)])
-            <div wire:key="box-{{ $t->id }}" style="animation-delay: {{ $loop->index * 70 }}ms"
+            <div wire:key="box-{{ $t->id }}" data-kartu-tim style="animation-delay: {{ $loop->index * 70 }}ms"
+                x-show="tampil({{ $loop->index }})"
+                x-transition:enter="transition-opacity duration-500" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                 @class([
                     'group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl motion-safe:animate-muncul dark:bg-zinc-900 dark:ring-zinc-800',
                     $w['cincin'],
